@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OwO~chill</title>
+    <style>
+        body {
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+            color: #fff;
+        }
+
+        .night {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform: rotateZ(45deg);
+            z-index: 1;
+        }
+
+        .shooting_star {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            height: 2px;
+            background: linear-gradient(-45deg, #5f91ff, rgba(0, 0, 255, 0));
+            border-radius: 999px;
+            filter: drop-shadow(0 0 6px #699bff);
+            animation: tail 3000ms ease-in-out infinite, shooting 3000ms ease-in-out infinite;
+        }
+
+        .shooting_star::before,
+        .shooting_star::after {
+            content: "";
+            position: absolute;
+            top: calc(50% - 1px);
+            right: 0;
+            height: 2px;
+            background: linear-gradient(-45deg, rgba(0, 0, 255, 0), #5f91ff, rgba(0, 0, 255, 0));
+            transform: translateX(50%) rotateZ(45deg);
+            border-radius: 100%;
+            animation: shining 3000ms ease-in-out infinite;
+        }
+
+        @keyframes tail {
+            0% { width: 0; }
+            30% { width: 100px; }
+            100% { width: 0; }
+        }
+
+        @keyframes shining {
+            0% { width: 0; }
+            50% { width: 30px; }
+            100% { width: 0; }
+        }
+
+        @keyframes shooting {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(300px); }
+        }
+
+        #room-section {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+        }
+
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            max-width: 500px;
+            position: relative;
+            z-index: 10;
+        }
+
+        #messages li {
+            padding: 8px;
+            background-color: rgba(243, 240, 240, 0.8); 
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        #form {
+            display: flex;
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            max-width: 500px;
+            z-index: 10;
+        }
+
+        #input {
+            flex-grow: 1;
+            padding: 10px;
+            background-color: rgba(68, 68, 68, 0.8);
+            color: #f3ebebec; /* Màu chữ trắng */
+            border: 1px solid #555;
+            border-radius: 5px;
+        }
+
+        #send {
+            padding: 10px;
+            background-color: rgba(26, 26, 26, 0.8);
+            color: #fff;
+            border: 1px solid #eee4e4;
+            border-radius: 5px;
+            margin-left: 5px;
+        }
+
+        #send:hover {
+            background-color: rgba(252, 252, 252, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="night">
+        <!-- Sao băng -->
+        <div class="shooting_star" style="top: 20%; left: 10%; animation-delay: 0s;"></div>
+        <div class="shooting_star" style="top: 30%; left: 30%; animation-delay: 2s;"></div>
+        <div class="shooting_star" style="top: 50%; left: 50%; animation-delay: 1s;"></div>
+        <div class="shooting_star" style="top: 70%; left: 20%; animation-delay: 3s;"></div>
+        <div class="shooting_star" style="top: 90%; left: 80%; animation-delay: 4s;"></div>
+    </div>
+
+    <div id="room-section">
+        <h1>Chat Room</h1>
+        <button id="createRoom">Create Room</button>
+        <input id="roomIdInput" placeholder="Enter Room ID" />
+        <button id="joinRoom">Join Room</button>
+    </div>
+
+    <ul id="messages"></ul>
+    <form id="form" action="" style="display: none;">
+        <input id="input" autocomplete="off" placeholder="Type your message..." />
+        <button id="send">Send</button>
+    </form>
+
+    <!-- Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io();
+
+        document.getElementById('createRoom').addEventListener('click', function() {
+            socket.emit('createRoom');
+        });
+
+        document.getElementById('joinRoom').addEventListener('click', function() {
+            var roomId = document.getElementById('roomIdInput').value;
+            socket.emit('joinRoom', roomId);
+        });
+
+        socket.on('roomCreated', function(roomId) {
+            alert('Room created with ID: ' + roomId);
+            document.getElementById('roomIdInput').value = roomId;
+            document.getElementById('room-section').style.display = 'none';
+            document.getElementById('form').style.display = 'block';
+        });
+
+        socket.on('roomJoined', function(roomId) {
+            alert('Joined room with ID: ' + roomId);
+            document.getElementById('room-section').style.display = 'none';
+            document.getElementById('form').style.display = 'block';
+        });
+
+        socket.on('error', function(msg) {
+            alert(msg);
+        });
+
+        var form = document.getElementById('form');
+        var input = document.getElementById('input');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (input.value) {
+                var roomId = document.getElementById('roomIdInput').value;
+                socket.emit('chat message', { roomId, msg: input.value });
+                input.value = '';
+            }
+        });
+
+        socket.on('chat message', function(msg) {
+            var item = document.createElement('li');
+            item.textContent = msg;
+            document.getElementById('messages').appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight);
+        });
+    </script>
+</body>
+</html>
